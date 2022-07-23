@@ -94,3 +94,6 @@ dmypy.json
 
 # results
 results/
+
+# GitHub PAT
+pat.txt
