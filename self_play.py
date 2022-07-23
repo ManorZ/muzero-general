@@ -400,6 +400,8 @@ class MCTS:
             prior_score = pb_c * (
                 child.prior / sum([child.prior for child in parent.children.values()])
             )
+        elif self.config.node_prior == "on_policy":
+            prior_score = pb_c * child.prior
         else:
             raise ValueError("{} is unknown prior option, choose uniform or density")
 
@@ -475,9 +477,11 @@ class Node:
         self.std = torch.exp(log_std)
 
         distribution = torch.distributions.normal.Normal(self.mu, self.std)
-        action_value = distribution.sample().squeeze(0).detach().cpu().numpy()
+        action = distribution.sample()
+        action_value = action.squeeze(0).detach().cpu().numpy()
+        action_proba = torch.exp(distribution.log_prob(action)).squeeze(0).detach().cpu().numpy()
 
-        self.children[Action(action_value)] = Node()
+        self.children[Action(action_value)] = Node(prior=action_proba)
 
     def add_exploration_noise(self, dirichlet_alpha, exploration_fraction):
         """
